@@ -4,6 +4,9 @@ import 'package:slang_gpt/model/gpt_model.dart';
 
 /// Represents the gpt node in build.yaml
 class GptConfig {
+  /// The OpenAI api url or customized third-party url.
+  final Uri apiUri;
+
   /// The GPT model that should be used.
   final GptModel model;
 
@@ -23,6 +26,7 @@ class GptConfig {
   final List<I18nLocale> excludes;
 
   const GptConfig({
+    required this.apiUri,
     required this.model,
     required this.description,
     required this.maxInputLength,
@@ -37,6 +41,10 @@ class GptConfig {
       throw 'Missing gpt entry in config.';
     }
 
+    final apiUrl = gpt['api_url'];
+    final defaultApiUri = Uri.https('api.openai.com', 'v1/chat/completions');
+    final apiHostUri = apiUrl != null ? Uri.parse(apiUrl) : defaultApiUri;
+
     final model = GptModel.values.firstWhereOrNull((e) => e.id == gpt['model']);
     if (model == null) {
       throw 'Unknown model: ${gpt['model']}\nAvailable models: ${GptModel.values.map((e) => e.id).join(', ')}';
@@ -48,14 +56,12 @@ class GptConfig {
     }
 
     return GptConfig(
+      apiUri: apiHostUri,
       model: model,
       description: description,
       maxInputLength: gpt['max_input_length'] ?? model.defaultInputLength,
       temperature: gpt['temperature']?.toDouble(),
-      excludes: (gpt['excludes'] as List?)
-              ?.map((e) => I18nLocale.fromString(e))
-              .toList() ??
-          [],
+      excludes: (gpt['excludes'] as List?)?.map((e) => I18nLocale.fromString(e)).toList() ?? [],
     );
   }
 }

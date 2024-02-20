@@ -77,8 +77,7 @@ Future<void> runGpt(List<String> arguments) async {
   );
 
   if (gptConfig.excludes.isNotEmpty) {
-    print(
-        'Excludes: ${gptConfig.excludes.map((e) => e.languageTag).join(', ')}');
+    print('Excludes: ${gptConfig.excludes.map((e) => e.languageTag).join(', ')}');
   }
 
   int promptCount = 0;
@@ -93,8 +92,7 @@ Future<void> runGpt(List<String> arguments) async {
     final raw = await file.read();
     final Map<String, dynamic> originalTranslations;
     try {
-      originalTranslations =
-          BaseDecoder.decodeWithFileType(fileCollection.config.fileType, raw);
+      originalTranslations = BaseDecoder.decodeWithFileType(fileCollection.config.fileType, raw);
     } on FormatException catch (e) {
       throw 'File: ${file.path}\n$e';
     }
@@ -107,8 +105,7 @@ Future<void> runGpt(List<String> arguments) async {
           continue;
         }
 
-        if (fileCollection.config.namespaces &&
-            destFile.namespace != file.namespace) {
+        if (fileCollection.config.namespaces && destFile.namespace != file.namespace) {
           // skip files in different namespaces
           continue;
         }
@@ -193,26 +190,22 @@ Future<TranslateMetrics> _translate({
   required int promptCount,
 }) async {
   print('');
-  print(
-      'Translating <${file.locale.languageTag}> to <${targetLocale.languageTag}> for ${file.path} ...');
+  print('Translating <${file.locale.languageTag}> to <${targetLocale.languageTag}> for ${file.path} ...');
 
   // existing translations of target locale
   Map<String, dynamic> existingTranslations = {};
   String targetPath = PathUtils.withFileName(
     directoryPath: outDir,
-    fileName:
-        '${file.namespace}_${targetLocale.languageTag}${fileCollection.config.inputFilePattern}',
+    fileName: '${file.namespace}_${targetLocale.languageTag}${fileCollection.config.inputFilePattern}',
     pathSeparator: Platform.pathSeparator,
   );
   if (!full) {
     for (final destFile in fileCollection.files) {
-      if ((!fileCollection.config.namespaces ||
-              (destFile.namespace == file.namespace)) &&
+      if ((!fileCollection.config.namespaces || (destFile.namespace == file.namespace)) &&
           destFile.locale == targetLocale) {
         final raw = await destFile.read();
         try {
-          existingTranslations = BaseDecoder.decodeWithFileType(
-              fileCollection.config.fileType, raw);
+          existingTranslations = BaseDecoder.decodeWithFileType(fileCollection.config.fileType, raw);
           targetPath = destFile.path;
           print(' -> With partial translations from ${destFile.path}');
         } on FormatException catch (e) {
@@ -263,6 +256,7 @@ Future<TranslateMetrics> _translate({
 
     print(' -> Request #$promptCount');
     final response = await _doRequest(
+      apiUri: gptConfig.apiUri,
       model: gptConfig.model,
       temperature: gptConfig.temperature,
       apiKey: apiKey,
@@ -332,6 +326,7 @@ Future<TranslateMetrics> _translate({
 
 /// Sends a prompt to a GPT provider and returns the response.
 Future<GptResponse> _doRequest({
+  required Uri apiUri,
   required GptModel model,
   required double? temperature,
   required String apiKey,
@@ -340,7 +335,7 @@ Future<GptResponse> _doRequest({
   switch (model.provider) {
     case GptProvider.openai:
       final response = await http.post(
-        Uri.https('api.openai.com', 'v1/chat/completions'),
+        apiUri,
         headers: {
           'Authorization': 'Bearer $apiKey',
           'Content-Type': 'application/json',
